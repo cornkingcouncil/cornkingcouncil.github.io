@@ -332,15 +332,15 @@
             const percentageCaught = (score / totalTossed) * 100;
             let finalMessage = '';
             if (percentageCaught > 90) {
-                finalMessage = "AREN'T YOU FORTUNATE?";
+                finalMessage = "THE KING SMILES UPON YOU!";
             } else if (percentageCaught >= 75) {
                 finalMessage = "THAT IS QUITE A BOUNTY!";
             } else if (percentageCaught >= 50) {
-                finalMessage = "HE GIVETH AND HE TAKETH AWAY";
+                finalMessage = "NOT THE WORST!";
             } else if (percentageCaught >= 25) {
-                finalMessage = "HE IS FORGIVING, THOUGH.";
+                finalMessage = "BETTER LUCK NEXT HARVEST.";
             } else {
-                finalMessage = "YOU HAVE\nDISAPPOINTED\nTHE CORN KING\nGREATLY.";
+                finalMessage = "YOU HAVE DISAPPOINTED\nTHE CORN KING GREATLY.";
             }
 
             ctx.font = '40px "Press Start 2P"';
@@ -367,6 +367,7 @@
             if (!gameStarted) {
                 gameStarted = true;
                 selectSound.play();
+                menuSong.play(); // Start playing the menu song after user interaction
                 startGame();
             }
         });
@@ -377,24 +378,6 @@
                 drawStartScreen();
                 requestAnimationFrame(initialLoop);
             }
-        }
-
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawBackground();
-            drawBlueBox();
-            drawRedRect();
-            drawYellowCircle();
-            updateBlueBox();
-            updateYellowCircle();
-            updateRedRect();
-
-            const tossProbability = rapidMode ? 0.04 : 0.02; // Double the frequency in rapid mode
-            if (Math.random() < tossProbability) {
-                tossYellowCircle();
-            }
-
-            animationFrameId = requestAnimationFrame(gameLoop);
         }
 
         menuSong.play();
