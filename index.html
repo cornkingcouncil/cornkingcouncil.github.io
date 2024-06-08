@@ -128,18 +128,6 @@
             dx: 5
         };
 
-        canvas.addEventListener('click', () => {
-    if (!gameStarted) {
-        gameStarted = true;
-        selectSound.play();
-        menuSong.play(); // Start playing the menu song after user interaction
-        startGame();
-    }
-});
-
-menuSong.play();
-initialLoop();
-
         function drawBackground() {
             const background = rapidMode ? backgroundInvertImage : backgroundImage;
             ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
