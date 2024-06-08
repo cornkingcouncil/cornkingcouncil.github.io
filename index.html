@@ -128,6 +128,18 @@
             dx: 5
         };
 
+        canvas.addEventListener('click', () => {
+    if (!gameStarted) {
+        gameStarted = true;
+        selectSound.play();
+        menuSong.play(); // Start playing the menu song after user interaction
+        startGame();
+    }
+});
+
+menuSong.play();
+initialLoop();
+
         function drawBackground() {
             const background = rapidMode ? backgroundInvertImage : backgroundImage;
             ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
@@ -332,13 +344,13 @@
             const percentageCaught = (score / totalTossed) * 100;
             let finalMessage = '';
             if (percentageCaught > 90) {
-                finalMessage = "THE KING SMILES UPON YOU!";
+                finalMessage = "THE KING FAVORS YOU!";
             } else if (percentageCaught >= 75) {
                 finalMessage = "THAT IS QUITE A BOUNTY!";
             } else if (percentageCaught >= 50) {
-                finalMessage = "NOT THE WORST!";
+                finalMessage = "BETTER LUCK NEXT HARVEST";
             } else if (percentageCaught >= 25) {
-                finalMessage = "BETTER LUCK NEXT HARVEST.";
+                finalMessage = "PRETTY BAD!\nHE IS FORGIVING, THOUGH.";
             } else {
                 finalMessage = "YOU HAVE DISAPPOINTED\nTHE CORN KING GREATLY.";
             }
@@ -367,7 +379,6 @@
             if (!gameStarted) {
                 gameStarted = true;
                 selectSound.play();
-                menuSong.play(); // Start playing the menu song after user interaction
                 startGame();
             }
         });
@@ -378,6 +389,24 @@
                 drawStartScreen();
                 requestAnimationFrame(initialLoop);
             }
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBackground();
+            drawBlueBox();
+            drawRedRect();
+            drawYellowCircle();
+            updateBlueBox();
+            updateYellowCircle();
+            updateRedRect();
+
+            const tossProbability = rapidMode ? 0.04 : 0.02; // Double the frequency in rapid mode
+            if (Math.random() < tossProbability) {
+                tossYellowCircle();
+            }
+
+            animationFrameId = requestAnimationFrame(gameLoop);
         }
 
         menuSong.play();
