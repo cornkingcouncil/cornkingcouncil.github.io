@@ -397,7 +397,9 @@
             animationFrameId = requestAnimationFrame(gameLoop);
         }
 
-        menuSong.play();
+        menuSong.play().catch((error) => {
+            console.error('Failed to play menu song:', error);
+        });
         initialLoop();
     </script>
 </body>
