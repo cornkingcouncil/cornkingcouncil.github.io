@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corn King Catch Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+        }
+        #gameCanvas {
+            display: block;
+            background-color: #f0f0f0;
+            position: relative;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 60px;
+            color: rgb(255, 234, 0);
+            font-family: 'Press Start 2P', cursive;
+        }
+        #timer {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 60px;
+            color: rgb(255, 234, 0);
+            font-family: 'Press Start 2P', cursive;
+        }
+        #playAgain {
+            position: absolute;
+            top: 70%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30px;
+            color: white;
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div style="position: relative;">
+        <canvas id="gameCanvas"></canvas>
+        <div id="score" style="display: none;">0</div>
+        <div id="timer" style="display: none;">90</div>
+        <div id="playAgain" style="display: none;" onclick="restartGame()">Play Again</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 1200;
+        canvas.height = 900;
+
+        let score = 0;
+        let yellowCircle = null;
+        let gameStarted = false;
+        let gameTimer;
+        let remainingTime = 90;
+        let animationFrameId;
+        let totalTossed = 0;
+        let rapidMode = false;
+
+        const backgroundImage = new Image();
+        backgroundImage.src = 'assets/background.png';
+
+        const backgroundInvertImage = new Image();
+        backgroundInvertImage.src = 'assets/backgroundinvert.png';
+
+        const blueBoxImage = new Image();
+        blueBoxImage.src = 'assets/CornKing.png';
+
+        const blueBoxInvertImage = new Image();
+        blueBoxInvertImage.src = 'assets/CornKinginvert.png';
+
+        const yellowCircleImage = new Image();
+        yellowCircleImage.src = 'assets/corn.png';
+
+        const yellowCircleInvertImage = new Image();
+        yellowCircleInvertImage.src = 'assets/corninvert.png';
+
+        const redRectImage = new Image();
+        redRectImage.src = 'assets/basket.png';
+
+        const redRectInvertImage = new Image();
+        redRectInvertImage.src = 'assets/basketinvert.png';
+
+        const splashScreenImage = new Image();
+        splashScreenImage.src = 'assets/splashscreen.jpg';
+
+        const menuSong = new Audio('assets/menusong.mp3');
+        menuSong.loop = true;
+        const selectSound = new Audio('assets/select.wav');
+        const countSound = new Audio('assets/count.wav');
+        const goSound = new Audio('assets/go.wav');
+        const gameSong = new Audio('assets/song.mp3');
+        gameSong.loop = true;
+        const songFaster = new Audio('assets/songfaster.mp3');
+        songFaster.loop = true;
+        const hurrySound = new Audio('assets/hurry.wav');
+        const catchSound = new Audio('assets/catch.wav');
+        const endGameSound = new Audio('assets/endgame.mp3');
+        const endSong = new Audio('assets/endsong.mp3');
+
+        const blueBox = {
+            x: canvas.width / 2,
+            y: 5,
+            width: 400,
+            height: 400,
+            dx: 2
+        };
+
+        const redRect = {
+            x: canvas.width / 2 - 75,
+            y: canvas.height - 105, // Initial value, will be adjusted dynamically
+            width: 200,
+            height: 120,
+            dx: 5
+        };
+
+        function drawBackground() {
+            const background = rapidMode ? backgroundInvertImage : backgroundImage;
+            ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+        }
+
+        function drawBlueBox() {
+            const blueBoxImg = rapidMode ? blueBoxInvertImage : blueBoxImage;
+            ctx.drawImage(blueBoxImg, blueBox.x, blueBox.y, blueBox.width, blueBox.height);
+        }
+
+        function drawRedRect() {
+            const redRectImg = rapidMode ? redRectInvertImage : redRectImage;
+            ctx.drawImage(redRectImg, redRect.x, redRect.y, redRect.width, redRect.height);
+        }
+
+        function drawYellowCircle() {
+            const yellowCircleImg = rapidMode ? yellowCircleInvertImage : yellowCircleImage;
+            if (yellowCircle) {
+                ctx.save();
+                ctx.translate(yellowCircle.x + 50, yellowCircle.y + 50); // Move to the center of the corn
+                ctx.rotate(yellowCircle.angle);
+                ctx.drawImage(yellowCircleImg, -50, -50, 100, 100); // Adjust for the center
+                ctx.restore();
+            }
+        }
+
+        function updateBlueBox() {
+            blueBox.x += blueBox.dx;
+            if (blueBox.x + blueBox.width > canvas.width || blueBox.x < 0) {
+                blueBox.dx *= -1;
+            }
+            // Randomly change direction occasionally
+            if (Math.random() < 0.005) {
+                blueBox.dx *= -1;
+            }
+        }
+
+        function updateYellowCircle() {
+            if (yellowCircle) {
+                yellowCircle.x += yellowCircle.dx;
+                yellowCircle.y += yellowCircle.dy;
+                yellowCircle.dy += 0.5; // gravity
+                yellowCircle.angle += 0.1; // Spin
+
+                if (yellowCircle.y + 100 > canvas.height) { // Adjusted to match the corn size
+                    yellowCircle = null;
+                }
+
+                if (yellowCircle && yellowCircle.y + 100 > redRect.y && // Adjusted to match the corn size
+                    yellowCircle.x + 50 > redRect.x && yellowCircle.x < redRect.x + redRect.width) {
+                    score++;
+                    document.getElementById('score').innerText = score;
+                    catchSound.play();
+                    yellowCircle = null;
+                }
+            }
+        }
+
+        function tossYellowCircle() {
+            if (!yellowCircle) {
+                const tossFromLeft = Math.random() < 0.5;
+                yellowCircle = {
+                    x: blueBox.x + blueBox.width / 2,
+                    y: blueBox.y + blueBox.height / 2,
+                    dx: tossFromLeft ? -2 : 2,
+                    dy: -10,
+                    angle: 0 // Initial angle
+                };
+                totalTossed++;
+            }
+        }
+
+        function updateRedRect() {
+            if (leftPressed && redRect.x > 0) {
+                redRect.x -= redRect.dx;
+            }
+            if (rightPressed && redRect.x + redRect.width < canvas.width) {
+                redRect.x += redRect.dx;
+            }
+            // Ensure the bottom of the basket is 5 pixels from the bottom of the screen
+            redRect.y = canvas.height - redRect.height - 5;
+        }
+
+        let leftPressed = false;
+        let rightPressed = false;
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                leftPressed = true;
+            } else if (e.key === 'ArrowRight') {
+                rightPressed = true;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft') {
+                leftPressed = false;
+            } else if (e.key === 'ArrowRight') {
+                rightPressed = false;
+            }
+        });
+
+        function drawStartScreen() {
+            ctx.drawImage(splashScreenImage, 0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'yellow';
+            ctx.font = '60px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            if (Math.floor(Date.now() / 500) % 2) {
+                ctx.fillText('START', canvas.width / 2, canvas.height / 2 + 200);
+            }
+        }
+
+        function startCountdown(callback) {
+            let countdown = 3;
+            function drawCountdown() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, canvas.width, canvas.height); // Make background black
+                ctx.fillStyle = 'yellow';
+                ctx.font = '120px "Press Start 2P"';
+                ctx.textAlign = 'center';
+                ctx.fillText(countdown > 0 ? countdown : "GO!", canvas.width / 2, canvas.height / 2);
+                if (countdown > 0) {
+                    countSound.play();
+                    countdown--;
+                    setTimeout(drawCountdown, 1000);
+                } else {
+                    goSound.play();
+                    setTimeout(callback, 1000);
+                }
+            }
+            drawCountdown();
+        }
+
+        function updateTimer() {
+            if (remainingTime > 0) {
+                remainingTime--;
+                document.getElementById('timer').innerText = remainingTime;
+
+                if (remainingTime === 15 && !rapidMode) {
+                    startRapidMode();
+                }
+
+                setTimeout(updateTimer, 1000);
+            } else {
+                endGame();
+            }
+        }
+
+        function startRapidMode() {
+            rapidMode = true;
+            gameSong.pause();
+            let hurryCount = 0;
+            function playHurrySound() {
+                if (hurryCount < 5) {
+                    hurrySound.play();
+                    hurryCount++;
+                    setTimeout(playHurrySound, 300);
+                } else {
+                    songFaster.play();
+                }
+            }
+            playHurrySound();
+
+            blueBox.dx *= 2;
+        }
+
+        function startGame() {
+            gameStarted = true;
+            totalTossed = 0;
+            rapidMode = false;
+            document.getElementById('score').style.display = 'block';
+            document.getElementById('timer').style.display = 'block';
+            document.getElementById('timer').innerText = remainingTime;
+            menuSong.pause();
+            startCountdown(() => {
+                gameSong.play();
+                gameLoop();
+                updateTimer();
+            });
+        }
+
+        function endGame() {
+            gameSong.pause();
+            songFaster.pause();
+            endGameSound.play();
+            cancelAnimationFrame(animationFrameId);
+            document.getElementById('score').style.display = 'none';
+            document.getElementById('timer').style.display = 'none';
+            document.getElementById('playAgain').style.display = 'block';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'yellow';
+            ctx.font = '40px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.fillText('THE CORN KING', canvas.width / 2, canvas.height / 2 - 150);
+            ctx.fillText('HAS BLESSED YOU WITH', canvas.width / 2, canvas.height / 2 - 100);
+            ctx.font = '80px "Press Start 2P"';
+            ctx.fillText(`${score} CORNS!`, canvas.width / 2, canvas.height / 2);
+            
+            const percentageCaught = (score / totalTossed) * 100;
+            let finalMessage = '';
+            if (percentageCaught > 85) {
+                finalMessage = "THE KING FAVORS YOU!";
+            } else if (percentageCaught >= 65) {
+                finalMessage = "THAT IS QUITE A BOUNTY!";
+            } else if (percentageCaught >= 45) {
+                finalMessage = "BETTER LUCK NEXT HARVEST";
+            } else if (percentageCaught >= 35) {
+                finalMessage = "NOT GREAT!\nHE IS FORGIVING, THOUGH.";
+            } else {
+                finalMessage = "YOU HAVE DISAPPOINTED\nTHE CORN KING GREATLY.";
+            }
+
+            ctx.font = '40px "Press Start 2P"';
+            finalMessage.split('\n').forEach((line, index) => {
+                ctx.fillText(line, canvas.width / 2, canvas.height / 2 + 60 + (index * 50));
+            });
+            endSong.play();
+        }
+
+        function restartGame() {
+            score = 0;
+            yellowCircle = null;
+            remainingTime = 90;
+            totalTossed = 0;
+            rapidMode = false;
+            blueBox.x = canvas.width / 2;
+            blueBox.y = 5;
+            blueBox.dx = 2;
+            redRect.x = canvas.width / 2 - 75;
+            redRect.y = canvas.height - 105;
+            document.getElementById('score').innerText = score;
+            document.getElementById('timer').innerText = remainingTime;
+            document.getElementById('playAgain').style.display = 'none';
+            endSong.pause();
+            endSong.currentTime = 0;
+            gameStarted = false;
+            startGame();
+        }
+
+        canvas.addEventListener('click', () => {
+            if (!gameStarted) {
+                gameStarted = true;
+                selectSound.play();
+                startGame();
+            }
+        });
+
+        function initialLoop() {
+            if (!gameStarted) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawStartScreen();
+                requestAnimationFrame(initialLoop);
+            }
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBackground();
+            drawBlueBox();
+            drawRedRect();
+            drawYellowCircle();
+            updateBlueBox();
+            updateYellowCircle();
+            updateRedRect();
+
+            const tossProbability = rapidMode ? 0.04 : 0.02; // Double the frequency in rapid mode
+            if (Math.random() < tossProbability) {
+                tossYellowCircle();
+            }
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        menuSong.play().catch((error) => {
+            console.error('Failed to play menu song:', error);
+        });
+        initialLoop();
+    </script>
+</body>
+</html>
