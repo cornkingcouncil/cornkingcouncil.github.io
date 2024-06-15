@@ -1,7 +1,16 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-canvas.width = 1200;
-canvas.height = 900;
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    if (canvas.width > 1200) canvas.width = 1200;
+    if (canvas.height > 900) canvas.height = 900;
+    console.log(`Canvas resized: ${canvas.width}x${canvas.height}`);
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
 let score = 0;
 let yellowCircle = null;
@@ -68,95 +77,6 @@ const redRect = {
     height: 120,
     dx: 5
 };
-
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    // Optional: limit the maximum size
-    if (canvas.width > 1200) canvas.width = 1200;
-    if (canvas.height > 900) canvas.height = 900;
-}
-
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-
-function drawBackground() {
-    const background = rapidMode ? backgroundInvertImage : backgroundImage;
-    ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
-}
-
-function drawBlueBox() {
-    const blueBoxImg = rapidMode ? blueBoxInvertImage : blueBoxImage;
-    ctx.drawImage(blueBoxImg, blueBox.x, blueBox.y, blueBox.width, blueBox.height);
-}
-
-function drawRedRect() {
-    const redRectImg = rapidMode ? redRectInvertImage : redRectImage;
-    ctx.drawImage(redRectImg, redRect.x, redRect.y, redRect.width, redRect.height);
-}
-
-function drawYellowCircle() {
-    const yellowCircleImg = rapidMode ? yellowCircleInvertImage : yellowCircleImage;
-    if (yellowCircle) {
-        ctx.save();
-        ctx.translate(yellowCircle.x + 50, yellowCircle.y + 50);
-        ctx.rotate(yellowCircle.angle);
-        ctx.drawImage(yellowCircleImg, -50, -50, 100, 100);
-        ctx.restore();
-    }
-}
-
-function drawStartScreen() {
-    ctx.drawImage(splashScreenImage, 0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'yellow';
-    ctx.font = '60px "Press Start 2P"';
-    ctx.textAlign = 'center';
-    if (Math.floor(Date.now() / 500) % 2) {
-        ctx.fillText('START', canvas.width / 2, canvas.height / 2 + 200);
-    }
-}
-
-function drawPlayAgainButton() {
-    ctx.fillStyle = 'white';
-    ctx.font = '30px "Press Start 2P"';
-    ctx.textAlign = 'center';
-    ctx.fillText('Play Again', canvas.width / 4, canvas.height - 70);
-    ctx.fillText('Main Menu', (canvas.width / 4) * 3, canvas.height - 70);
-}
-
-function drawMenu() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'white';
-    ctx.font = '60px "Press Start 2P"';
-    ctx.textAlign = 'center';
-    ctx.fillText('SELECT GAME:', canvas.width / 2, canvas.height / 2 - 100);
-    ctx.font = '50px "Press Start 2P"';
-    ctx.fillText('CORN CATCH', canvas.width / 2, canvas.height / 2);
-    ctx.fillText('CROW DEFENSE', canvas.width / 2, canvas.height / 2 + 80);
-    ctx.fillText('ESCAPE THE KING\'S MAZE', canvas.width / 2, canvas.height / 2 + 160);
-}
-
-function drawComingSoon() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'white';
-    ctx.font = '60px "Press Start 2P"';
-    ctx.textAlign = 'center';
-    ctx.fillText('GAME COMING SOON', canvas.width / 2, canvas.height / 2);
-    ctx.font = '30px "Press Start 2P"';
-    ctx.fillText('Main Menu', canvas.width / 2, canvas.height - 70);
-
-    // Add event listener for the main menu button
-    canvas.addEventListener('click', handleComingSoonMenuClick);
-}
-
-
 
 function drawBackground() {
     const background = rapidMode ? backgroundInvertImage : backgroundImage;
