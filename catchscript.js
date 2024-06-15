@@ -1,5 +1,3 @@
-// catchscript.js
-
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 1200;
@@ -12,6 +10,7 @@ let remainingTime = 90;
 let animationFrameId;
 let totalTossed = 0;
 let rapidMode = false;
+let currentScreen = 'menu';
 
 const backgroundImage = new Image();
 backgroundImage.src = 'assets/CornCatch/background.png';
@@ -40,7 +39,7 @@ redRectInvertImage.src = 'assets/CornCatch/basketinvert.png';
 const splashScreenImage = new Image();
 splashScreenImage.src = 'assets/CornCatch/splashscreen.jpg';
 
-const startingSong = new Audio('assets/CornCatch/startsong.mp3');
+const startingSong = new Audio('assets/CornCatch/starting.mp3');
 startingSong.loop = true;
 const selectSound = new Audio('assets/CornCatch/select.wav');
 const countSound = new Audio('assets/CornCatch/count.wav');
@@ -69,6 +68,95 @@ const redRect = {
     height: 120,
     dx: 5
 };
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    // Optional: limit the maximum size
+    if (canvas.width > 1200) canvas.width = 1200;
+    if (canvas.height > 900) canvas.height = 900;
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function drawBackground() {
+    const background = rapidMode ? backgroundInvertImage : backgroundImage;
+    ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+}
+
+function drawBlueBox() {
+    const blueBoxImg = rapidMode ? blueBoxInvertImage : blueBoxImage;
+    ctx.drawImage(blueBoxImg, blueBox.x, blueBox.y, blueBox.width, blueBox.height);
+}
+
+function drawRedRect() {
+    const redRectImg = rapidMode ? redRectInvertImage : redRectImage;
+    ctx.drawImage(redRectImg, redRect.x, redRect.y, redRect.width, redRect.height);
+}
+
+function drawYellowCircle() {
+    const yellowCircleImg = rapidMode ? yellowCircleInvertImage : yellowCircleImage;
+    if (yellowCircle) {
+        ctx.save();
+        ctx.translate(yellowCircle.x + 50, yellowCircle.y + 50);
+        ctx.rotate(yellowCircle.angle);
+        ctx.drawImage(yellowCircleImg, -50, -50, 100, 100);
+        ctx.restore();
+    }
+}
+
+function drawStartScreen() {
+    ctx.drawImage(splashScreenImage, 0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'yellow';
+    ctx.font = '60px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    if (Math.floor(Date.now() / 500) % 2) {
+        ctx.fillText('START', canvas.width / 2, canvas.height / 2 + 200);
+    }
+}
+
+function drawPlayAgainButton() {
+    ctx.fillStyle = 'white';
+    ctx.font = '30px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.fillText('Play Again', canvas.width / 4, canvas.height - 70);
+    ctx.fillText('Main Menu', (canvas.width / 4) * 3, canvas.height - 70);
+}
+
+function drawMenu() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'white';
+    ctx.font = '60px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.fillText('SELECT GAME:', canvas.width / 2, canvas.height / 2 - 100);
+    ctx.font = '50px "Press Start 2P"';
+    ctx.fillText('CORN CATCH', canvas.width / 2, canvas.height / 2);
+    ctx.fillText('CROW DEFENSE', canvas.width / 2, canvas.height / 2 + 80);
+    ctx.fillText('ESCAPE THE KING\'S MAZE', canvas.width / 2, canvas.height / 2 + 160);
+}
+
+function drawComingSoon() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'white';
+    ctx.font = '60px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME COMING SOON', canvas.width / 2, canvas.height / 2);
+    ctx.font = '30px "Press Start 2P"';
+    ctx.fillText('Main Menu', canvas.width / 2, canvas.height - 70);
+
+    // Add event listener for the main menu button
+    canvas.addEventListener('click', handleComingSoonMenuClick);
+}
+
+
 
 function drawBackground() {
     const background = rapidMode ? backgroundInvertImage : backgroundImage;
@@ -101,7 +189,7 @@ function updateBlueBox() {
     if (blueBox.x + blueBox.width > canvas.width || blueBox.x < 0) {
         blueBox.dx *= -1;
     }
-    if (Math.random() < 0.005) {
+    if (Math.random() < 0.02) {
         blueBox.dx *= -1;
     }
 }
@@ -132,8 +220,8 @@ function tossYellowCircle() {
         yellowCircle = {
             x: blueBox.x + blueBox.width / 2,
             y: blueBox.y + blueBox.height / 2,
-            dx: tossFromLeft ? -2 : 2,
-            dy: -10,
+            dx: (Math.random() - 0.5) * 8, // More dramatic horizontal direction
+            dy: -15, // Adjusted for a more dramatic arc
             angle: 0
         };
         totalTossed++;
@@ -180,11 +268,12 @@ function drawStartScreen() {
 }
 
 function showStartScreen() {
+    currentScreen = 'start';
     startingSong.play().catch((error) => {
         console.error('Failed to play starting song:', error);
     });
     function initialLoop() {
-        if (!gameStarted) {
+        if (currentScreen === 'start') {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawStartScreen();
             requestAnimationFrame(initialLoop);
@@ -195,6 +284,7 @@ function showStartScreen() {
 
 function startCountdown(callback) {
     let countdown = 3;
+    currentScreen = 'countdown';
     function drawCountdown() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = 'black';
@@ -250,6 +340,7 @@ function startGame() {
     rapidMode = false;
     startingSong.pause();
     startCountdown(() => {
+        currentScreen = 'game';
         gameSong.play();
         gameLoop();
         updateTimer();
@@ -260,10 +351,12 @@ function drawPlayAgainButton() {
     ctx.fillStyle = 'white';
     ctx.font = '30px "Press Start 2P"';
     ctx.textAlign = 'center';
-    ctx.fillText('Play Again', canvas.width / 2, canvas.height - 70);
+    ctx.fillText('Play Again', canvas.width / 4, canvas.height - 70);
+    ctx.fillText('Main Menu', (canvas.width / 4) * 3, canvas.height - 70);
 }
 
 function endGame() {
+    currentScreen = 'end';
     gameSong.pause();
     songFaster.pause();
     endGameSound.play();
@@ -304,6 +397,7 @@ function endGame() {
 
     // Add event listener for the play again button
     canvas.addEventListener('click', handlePlayAgainClick);
+    canvas.addEventListener('click', handleMainMenuClick);
 }
 
 function handlePlayAgainClick(event) {
@@ -311,11 +405,37 @@ function handlePlayAgainClick(event) {
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
-    if (x >= canvas.width / 2 - 100 && x <= canvas.width / 2 + 100 &&
+    if (x >= canvas.width / 4 - 100 && x <= canvas.width / 4 + 100 &&
         y >= canvas.height - 90 && y <= canvas.height - 50) {
         canvas.removeEventListener('click', handlePlayAgainClick);
+        endSong.pause();
+        endSong.currentTime = 0;
         restartGame();
     }
+}
+
+function handleMainMenuClick(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    if (x >= (canvas.width / 4) * 3 - 100 && x <= (canvas.width / 4) * 3 + 100 &&
+        y >= canvas.height - 90 && y <= canvas.height - 50) {
+        canvas.removeEventListener('click', handleMainMenuClick);
+        endSong.pause();
+        endSong.currentTime = 0;
+        returnToMenu();
+    }
+}
+
+function returnToMenu() {
+    gameStarted = false;
+    currentScreen = 'menu';
+    endSong.pause();
+    endSong.currentTime = 0;
+    gameSong.pause();
+    gameSong.currentTime = 0;
+    drawMenu();
 }
 
 function restartGame() {
@@ -335,11 +455,92 @@ function restartGame() {
     startGame();
 }
 
-canvas.addEventListener('click', () => {
-    if (!gameStarted) {
-        gameStarted = true;
-        selectSound.play();
-        startGame();
+function resetGame() {
+    score = 0;
+    yellowCircle = null;
+    remainingTime = 90;
+    totalTossed = 0;
+    rapidMode = false;
+    blueBox.x = canvas.width / 2;
+    blueBox.y = 5;
+    blueBox.dx = 2;
+    redRect.x = canvas.width / 2 - 75;
+    redRect.y = canvas.height - 105;
+    gameStarted = false;
+}
+
+function drawMenu() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'white';
+    ctx.font = '60px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.fillText('SELECT GAME:', canvas.width / 2, canvas.height / 2 - 100);
+    ctx.font = '50px "Press Start 2P"';
+    ctx.fillText('CORN CATCH', canvas.width / 2, canvas.height / 2);
+    ctx.fillText('CROW DEFENSE', canvas.width / 2, canvas.height / 2 + 80);
+    ctx.fillText('ESCAPE THE KING\'S MAZE', canvas.width / 2, canvas.height / 2 + 160);
+}
+
+function drawComingSoon() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'white';
+    ctx.font = '60px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME COMING SOON', canvas.width / 2, canvas.height / 2);
+    ctx.font = '30px "Press Start 2P"';
+    ctx.fillText('Main Menu', canvas.width / 2, canvas.height - 70);
+
+    // Add event listener for the main menu button
+    canvas.addEventListener('click', handleComingSoonMenuClick);
+}
+
+function handleComingSoonMenuClick(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    if (x >= canvas.width / 2 - 100 && x <= canvas.width / 2 + 100 &&
+        y >= canvas.height - 90 && y <= canvas.height - 50) {
+        canvas.removeEventListener('click', handleComingSoonMenuClick);
+        returnToMenu();
+    }
+}
+
+function handleMenuClick(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    if (currentScreen === 'menu') {
+        if (y >= canvas.height / 2 - 25 && y <= canvas.height / 2 + 25) {
+            // Corn Catch
+            resetGame();
+            showStartScreen();
+        } else if (y >= canvas.height / 2 + 55 && y <= canvas.height / 2 + 105) {
+            // Crow Defense
+            currentScreen = 'coming_soon';
+            drawComingSoon();
+        } else if (y >= canvas.height / 2 + 135 && y <= canvas.height / 2 + 185) {
+            // Escape the King's Maze
+            currentScreen = 'coming_soon';
+            drawComingSoon();
+        }
+    }
+}
+
+canvas.addEventListener('click', (event) => {
+    if (currentScreen === 'menu') {
+        handleMenuClick(event);
+    } else if (currentScreen === 'start') {
+        if (!gameStarted) {
+            gameStarted = true;
+            selectSound.play();
+            startGame();
+        }
     }
 });
 
@@ -367,6 +568,13 @@ function gameLoop() {
     ctx.fillText(remainingTime, canvas.width - 20, 80);
 
     animationFrameId = requestAnimationFrame(gameLoop);
+}
+
+function initialLoop() {
+    if (currentScreen === 'menu') {
+        drawMenu();
+    }
+    requestAnimationFrame(initialLoop);
 }
 
 initialLoop();
