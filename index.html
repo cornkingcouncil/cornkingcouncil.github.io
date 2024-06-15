@@ -3,101 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Corn King Arcade</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <title>Corn King Game</title>
     <link rel="stylesheet" href="catchstyle.css">
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #000;
-        }
-        #menuCanvas {
-            display: block;
-            background-color: #000;
-        }
-        #gameContainer {
-            display: none;
-            position: relative;
-            width: 1200px;
-            height: 900px;
-        }
-        #gameCanvas {
-            display: block;
-            background-color: #f0f0f0;
-        }
-    </style>
 </head>
 <body>
-    <canvas id="menuCanvas" width="1200" height="900"></canvas>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
     </div>
-
     <script src="catchscript.js"></script>
-    <script>
-        const menuCanvas = document.getElementById('menuCanvas');
-        const menuCtx = menuCanvas.getContext('2d');
-        const gameContainer = document.getElementById('gameContainer');
-        const gameCanvas = document.getElementById('gameCanvas');
-        const gameCtx = gameCanvas.getContext('2d');
-
-        function drawMenu() {
-            menuCtx.clearRect(0, 0, menuCanvas.width, menuCanvas.height);
-            menuCtx.fillStyle = 'white';
-            menuCtx.font = '60px "Press Start 2P"';
-            menuCtx.textAlign = 'center';
-            menuCtx.fillText('SELECT GAME:', menuCanvas.width / 2, 200);
-            menuCtx.font = '40px "Press Start 2P"';
-            menuCtx.fillText('CORN CATCH', menuCanvas.width / 2, 400);
-            menuCtx.fillText('CROW DEFENSE', menuCanvas.width / 2, 500);
-            menuCtx.fillText('ESCAPE THE KING\'S MAZE', menuCanvas.width / 2, 600);
-        }
-
-        function handleMenuClick(event) {
-            const rect = menuCanvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-
-            if (y >= 360 && y <= 440) {
-                showCornCatchStartScreen();
-            } else if (y >= 460 && y <= 540) {
-                showComingSoon();
-            } else if (y >= 560 && y <= 640) {
-                showComingSoon();
-            }
-        }
-
-        function showCornCatchStartScreen() {
-            menuCanvas.style.display = 'none';
-            gameContainer.style.display = 'block';
-            showStartScreen();
-        }
-
-        function showComingSoon() {
-            menuCtx.clearRect(0, 0, menuCanvas.width, menuCanvas.height);
-            menuCtx.fillStyle = 'white';
-            menuCtx.font = '60px "Press Start 2P"';
-            menuCtx.textAlign = 'center';
-            menuCtx.fillText('GAME COMING SOON', menuCanvas.width / 2, menuCanvas.height / 2);
-            menuCtx.fillText('RETURN TO MENU', menuCanvas.width / 2, menuCanvas.height / 2 + 100);
-            menuCanvas.addEventListener('click', returnToMenu);
-        }
-
-        function returnToMenu() {
-            menuCanvas.removeEventListener('click', returnToMenu);
-            drawMenu();
-            menuCanvas.style.display = 'block';
-            gameContainer.style.display = 'none';
-        }
-
-        menuCanvas.addEventListener('click', handleMenuClick);
-
-        drawMenu();
-    </script>
 </body>
 </html>
